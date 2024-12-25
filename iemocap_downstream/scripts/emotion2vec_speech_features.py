@@ -17,6 +17,8 @@ from npy_append_array import NpyAppendArray
 
 import fairseq
 import soundfile as sf
+import numpy as np
+import torchaudio
 
 
 def get_parser():
@@ -48,24 +50,34 @@ class Emotion2vecFeatureReader(object):
         model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([checkpoint])
         model = model[0]
         model.eval()
-        model.cuda()
+        # model.cuda()
         self.model = model
         self.task = task
         self.layer = layer
 
     def read_audio(self, fname):
-        """Load an audio file and return PCM along with the sample rate"""
+        """Load an audio file, convert to mono if necessary, resample to 16kHz using torchaudio, and return PCM along with the sample rate"""
         wav, sr = sf.read(fname)
         channel = sf.info(fname).channels
-        assert sr == 16e3, "Sample rate should be 16kHz, but got {}in file {}".format(sr, fname)
-        assert channel == 1, "Channel should be 1, but got {} in file {}".format(channel, fname)
+
+        # Convert to mono if the audio is multi-channel
+        if channel > 1:
+            wav = np.mean(wav, axis=1)
+            channel = 1
+
+        # Resample if the sample rate is not 16kHz
+        if sr != 16000:
+            resampler = torchaudio.transforms.Resample(orig_freq=sr, new_freq=16000)
+            wav = resampler(torch.tensor(wav).float()).numpy()
+            sr = 16000
 
         return wav
 
     def get_feats(self, loc):
         x = self.read_audio(loc)
         with torch.no_grad():
-            source = torch.from_numpy(x).float().cuda()
+            # source = torch.from_numpy(x).float().cuda()
+            source = torch.from_numpy(x).float()
             if self.task.cfg.normalize:
                 source = F.layer_norm(source, source.shape)
             source = source.view(1, -1)
