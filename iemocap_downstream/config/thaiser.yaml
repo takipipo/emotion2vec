@@ -1,0 +1,17 @@
+common:
+  seed: 42
+
+dataset:
+  # this folder should contain train, val, test with <split>.npy, <split>.lengths, <split>.emo
+  feat_path: ../dataset 
+  batch_size: 32
+  eval_is_test: true
+  labels:
+    neutral: 0
+    happiness: 1
+    sadness: 2
+    anger: 3
+
+optimization:
+  epoch: 100
+  lr: 1e-4
