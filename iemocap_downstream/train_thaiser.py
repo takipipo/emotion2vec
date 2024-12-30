@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 from pathlib import Path
 
 import hydra
@@ -18,12 +19,13 @@ import logging
 from tqdm import tqdm
 import mlflow
 import mlflow.pytorch
+from mlflow.types import Schema, TensorSpec
+from mlflow.models import ModelSignature
 
 os.environ["MLFLOW_TRACKING_USERNAME"] = "admin"
 os.environ["MLFLOW_TRACKING_PASSWORD"] = "password"
 
 logger = logging.getLogger("ThaiSER_Downstream")
-
 
 
 def count_parameters(model):
@@ -120,6 +122,11 @@ def train_thaiser(cfg: DictConfig):
     model = BaseModel(input_dim=768, output_dim=len(label_dict))
     model = model.to(device)
 
+    signature = ModelSignature(
+        inputs=Schema([TensorSpec(np.dtype(np.float32), (-1, 768))]),
+        outputs=Schema([TensorSpec(np.dtype(np.float32), (-1, len(label_dict)))]),
+    )
+
     # Setup optimizer and loss
     optimizer = optim.RMSprop(model.parameters(), lr=cfg.optimization.lr, momentum=0.9)
     scheduler = optim.lr_scheduler.CyclicLR(
@@ -181,7 +188,7 @@ def train_thaiser(cfg: DictConfig):
                 torch.save(model.state_dict(), model_path)
                 logger.info(f"New best model saved with validation WA: {val_wa:.2f}%")
                 # Log best model
-                mlflow.pytorch.log_model(model, "best_model")
+                mlflow.pytorch.log_model(model, "best_model", signature=signature)
 
             # Print losses for every epoch
             logger.info(
