@@ -147,6 +147,9 @@ def train_thaiser(cfg: DictConfig):
     mlflow.set_experiment("ThaiSER_Emotion_Recognition")
 
     with mlflow.start_run():
+        mlflow.log_artifact(
+            os.path.join(get_original_cwd(), "config/thaiser.yaml"), "training_args"
+        )
         # Log parameters
         mlflow.log_params(
             {
