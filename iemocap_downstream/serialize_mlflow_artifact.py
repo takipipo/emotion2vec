@@ -19,7 +19,7 @@ with open(config_path, "r") as f:
 
 id2label = {v: k for k, v in label2id.items()}
 
-feat = torch.rand(1, 768)
+feat = torch.rand(1, 100, 768)
 padding_mask = torch.zeros(1, 100).bool()
 
 with torch.no_grad():

@@ -123,7 +123,12 @@ def train_thaiser(cfg: DictConfig):
     model = model.to(device)
 
     signature = ModelSignature(
-        inputs=Schema([TensorSpec(np.dtype(np.float32), (-1, 768))]),
+        inputs=Schema(
+            [
+                TensorSpec(np.dtype(np.float32), (-1, -1, 768)),  # x input
+                TensorSpec(np.dtype(bool), (-1, -1)),  # padding_mask input
+            ]
+        ),
         outputs=Schema([TensorSpec(np.dtype(np.float32), (-1, len(label_dict)))]),
     )
 
